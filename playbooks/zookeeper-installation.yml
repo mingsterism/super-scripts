@@ -1,0 +1,34 @@
+---
+- hosts: hosts
+  vars:
+    http_port: 80
+    max_clients: 200
+  remote_user: root
+  tasks:
+  - name: Run equivalent of "apt-get update" as a separate step
+    apt:
+      update_cache: yes
+  - name: System upgrade "apt-get upgrade"
+    command: apt-get upgrade -y -qq
+  - name: download latest zookeeper
+    get_url:
+      url: http://www-eu.apache.org/dist/zookeeper/zookeeper-3.4.9/zookeeper-3.4.9.tar.gz
+      dest: /home
+      checksum: md5:3e8506075212c2d41030d874fcc9dcd2
+  - name: create zookeeper directory at /usr/local/zookeeper
+    file:
+      path: /usr/local/zookeeper
+      state: directory
+      mode: 0755
+  - name: tar xzf the file and move to /usr/local/zookeeper
+    unarchive:
+      src: /home/zookeeper-3.4.9.tar.gz
+      dest: /usr/local/zookeeper
+      remote_src: True
+  - name: set remote file path
+    set_fact: zoo_config=/usr/local/zookeeper/zookeeper-3.4.9/conf/zoo.cfg
+  - name: create zoo.cfg file
+    file:
+      path: '{{ zoo_config }}'
+      state: touch
+      mode: "u+rw,g-wx,o-rwx"
