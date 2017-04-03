@@ -27,8 +27,17 @@
       remote_src: True
   - name: set remote file path
     set_fact: zoo_config=/usr/local/zookeeper/zookeeper-3.4.9/conf/zoo.cfg
-  - name: create zoo.cfg file
-    file:
+  # - name: create zoo.cfg file
+  #   file:
+  #     path: '{{ zoo_config }}'
+  #     state: touch
+  #     mode: "u+rw,g-wx,o-rwx"
+  - name: create file zoo.cfg if doesnt exist and write initial config to zoo.cfg
+    blockinfile:
       path: '{{ zoo_config }}'
-      state: touch
-      mode: "u+rw,g-wx,o-rwx"
+      create: yes
+      block: |
+        tickTime=2000
+        dataDir=/var/zookeeper
+        clientPort=2181
+
