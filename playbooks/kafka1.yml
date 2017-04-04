@@ -1,0 +1,10 @@
+---
+- hosts: hosts
+  vars:
+    MY_IP: 123.123.123.123
+  remote_user: root
+  tasks:
+    -name: Install kafka
+    get_url:
+      url: http://www-eu.apache.org/dist/kafka/0.10.2.0/kafka_2.11-0.10.2.0.tgz
+      dest: /home

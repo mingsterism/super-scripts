@@ -1,27 +1,28 @@
 ---
-- hosts: hosts
+- hosts: 127.0.0.1
+  connection: local
   vars:
-    MY_IP: 123.123.123.123
+    broker_ip: 123.123.123.123
   remote_user: root
   tasks:
-  -name: Install Kafka
+  - name: Install Kafka
     get_url:
       url: http://www-eu.apache.org/dist/kafka/0.10.2.0/kafka_2.11-0.10.2.0.tgz
       dest: /home
-  -name: tar xzf the file and move to /usr/local
+  - name: tar xzf the file and move to /usr/local
     unarchive:
-      src: /home/kafka_2.11-0-10.2.0
+      src: /home/kafka_2.11-0.10.2.0.tgz
       dest: /usr/local
       remote_src: True
-  -name: move kafka_2.11-0-10.2.0 to kafka 
-    command: mv /usr/local/kafka_2.11-0-10.2.0 /usr/local/kafka 
-  -name: edit kafka config/server-1.properties file and insert configs
+  - name: move kafka_2.11-0-10.2.0 to kafka 
+    command: mv /usr/local/kafka_2.11-0.10.2.0 /usr/local/kafka 
+  - name: edit kafka config/server-1.properties file and insert configs
     blockinfile:
-      path: /usr/local/kafka/config/server-1.properties
+      dest: /usr/local/kafka/config/server-1.properties  # as of ansible 2.3 new command is path
       create: yes
       block: |
         broker.id=1
-        listeners=PLAINTEXT://{{ MY_IP }}:9092
+        listeners=PLAINTEXT://{{ broker_ip }}:9092
         num.network.threads=3
         num.io.threads=8
         socket.send.buffer.bytes=102400
@@ -32,5 +33,34 @@
         log.retention.hours=168
         log.segment.bytes=1073741824
         log.retention.check.interval.ms=300000
-        zookeeper.connect={{MY_IP}}:2181/kafka 
+        zookeeper.connect={{ broker_ip }}:2181/kafka 
         zookeeper.connection.timeout.ms=6000
+  - name: run zookeeper server 
+    command: /usr/local/kafka/bin/zookeeper-server-start.sh config/zookeeper.properties &
+  - name: run kafka server 
+    command: /usr/local/kafka/bin/kafka-server-start.sh config/server.properties &
+  - name: create test topic
+    command: /usr/local/kafka/bin/kafka-topics.sh --create --zookeeper {{ broker_ip }}:2181/kafka --replication-factor 1 --partitions 1 --topic test &
+  - name: list kafka-topics
+    command: /usr/local/kafka/bin/kafka-topics.sh --list --zookeeper localhost:2181
+
+- hosts: nodes
+  remote_user: root
+  tasks: 
+  - name: Install Kafka
+    get_url:
+      url: http://www-eu.apache.org/dist/kafka/0.10.2.0/kafka_2.11-0.10.2.0.tgz
+      dest: /home
+  - name: tar xzf the file and move to /usr/local
+    unarchive:
+      src: /home/kafka_2.11-0.10.2.0.tgz
+      dest: /usr/local
+      remote_src: True
+  - name: move kafka_2.11-0-10.2.0 to kafka 
+    command: mv /usr/local/kafka_2.11-0.10.2.0 /usr/local/kafka 
+- hosts: consumer
+  - name: run consumer 
+    command: /usr/local/kafka/bin/kafka-console-consumer.sh --bootstrap-server {{ broker_ip }}:9092 --topic test --from-beginning 
+- hosts: producer
+  - name: run producer
+    command: /usr/local/kafka/bin/kafka-console-producer.sh --broker-list {{ broker_ip }}:9092 --topic test
