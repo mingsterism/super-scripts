@@ -1,0 +1,36 @@
+---
+- hosts: hosts
+  vars:
+    MY_IP: 123.123.123.123
+  remote_user: root
+  tasks:
+  -name: Install Kafka
+    get_url:
+      url: http://www-eu.apache.org/dist/kafka/0.10.2.0/kafka_2.11-0.10.2.0.tgz
+      dest: /home
+  -name: tar xzf the file and move to /usr/local
+    unarchive:
+      src: /home/kafka_2.11-0-10.2.0
+      dest: /usr/local
+      remote_src: True
+  -name: move kafka_2.11-0-10.2.0 to kafka 
+    command: mv /usr/local/kafka_2.11-0-10.2.0 /usr/local/kafka 
+  -name: edit kafka config/server-1.properties file and insert configs
+    blockinfile:
+      path: /usr/local/kafka/config/server-1.properties
+      create: yes
+      block: |
+        broker.id=1
+        listeners=PLAINTEXT://{{ MY_IP }}:9092
+        num.network.threads=3
+        num.io.threads=8
+        socket.send.buffer.bytes=102400
+        socket.request.max.bytes=104857600
+        log.dirs=/tmp/kafka-logs
+        num.partitions=1
+        num.recovery.threads.per.data.dir=1
+        log.retention.hours=168
+        log.segment.bytes=1073741824
+        log.retention.check.interval.ms=300000
+        zookeeper.connect={{MY_IP}}:2181/kafka 
+        zookeeper.connection.timeout.ms=6000
