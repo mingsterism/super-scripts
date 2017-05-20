@@ -11,12 +11,3 @@ echo "------------------------- Printing java and javac versions ---------------
 java -version
 javac -version
 
-
-
-
-
-
-
-
-
-

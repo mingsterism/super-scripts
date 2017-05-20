@@ -1,5 +1,6 @@
 ---
-- hosts: hosts
+- hosts: 127.0.0.1
+  connection: local
   vars:
     http_port: 80
     max_clients: 200
@@ -34,10 +35,12 @@
   #     mode: "u+rw,g-wx,o-rwx"
   - name: create file zoo.cfg if doesnt exist and write initial config to zoo.cfg
     blockinfile:
-      path: '{{ zoo_config }}'
+      dest: '{{ zoo_config }}'
       create: yes
       block: |
         tickTime=2000
+        initLimit=10
+        syncLimit=5
         dataDir=/var/zookeeper
         clientPort=2181
 

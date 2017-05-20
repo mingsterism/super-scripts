@@ -37,6 +37,7 @@
         zookeeper.connection.timeout.ms=6000
   - name: run zookeeper server 
     command: /usr/local/kafka/bin/zookeeper-server-start.sh config/zookeeper.properties &
+    # command: /usr/local/zookeeper/zookeeper-3.4.9/bin/zkServer.sh start
   - name: run kafka server 
     command: /usr/local/kafka/bin/kafka-server-start.sh config/server.properties &
   - name: create test topic
@@ -64,3 +65,7 @@
 - hosts: producer
   - name: run producer
     command: /usr/local/kafka/bin/kafka-console-producer.sh --broker-list {{ broker_ip }}:9092 --topic test
+
+
+
+
